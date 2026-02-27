@@ -49,7 +49,7 @@ export function EmbedBlock({
             </div>
 
             {block.url && (
-                <div style={{ marginTop: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden', height: '200px' }}>
+                <div style={{ marginTop: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden', height: '400px' }}>
                     <iframe
                         src={block.url}
                         style={{ width: '100%', height: '100%', border: 'none' }}

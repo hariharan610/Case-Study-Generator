@@ -74,7 +74,7 @@ export default function Preview({
                 <button
                     className="btn-secondary"
                     onClick={handleCopyToMedium}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--color-text)', color: 'var(--color-text)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
                 >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -86,7 +86,7 @@ export default function Preview({
 
             {/* Hero Section (Basic Info) */}
             <section className="preview-hero" style={{ minHeight: '300px' }}>
-                <div className="preview-hero-gradient" style={{ background: 'var(--color-text)' }}></div>
+                <div className="preview-hero-gradient"></div>
                 <div className="preview-hero-content">
                     <h1>{projectData.name || 'Untitled Project'}</h1>
                     <div className="preview-hero-meta">
@@ -122,10 +122,10 @@ export default function Preview({
                                 {displayCopy && (
                                     <ReactMarkdown
                                         components={{
-                                            p: ({ node, ...props }) => <p style={{ fontSize: '1.125rem', lineHeight: 1.7, color: '#374151', marginBottom: '1rem' }} {...props} />,
+                                            p: ({ node, ...props }) => <p style={{ fontSize: '1.125rem', lineHeight: 1.7, color: 'var(--color-text)', opacity: 0.9, marginBottom: '1rem' }} {...props} />,
                                             a: ({ node, ...props }) => <a style={{ color: 'var(--color-text)', textDecoration: 'underline', textDecorationThickness: '2px', textUnderlineOffset: '4px' }} target="_blank" rel="noopener noreferrer" {...props} />,
-                                            ul: ({ node, ...props }) => <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem', fontSize: '1.125rem', lineHeight: 1.7, color: '#374151' }} {...props} />,
-                                            ol: ({ node, ...props }) => <ol style={{ paddingLeft: '1.5rem', marginBottom: '1rem', fontSize: '1.125rem', lineHeight: 1.7, color: '#374151' }} {...props} />,
+                                            ul: ({ node, ...props }) => <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem', fontSize: '1.125rem', lineHeight: 1.7, color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
+                                            ol: ({ node, ...props }) => <ol style={{ paddingLeft: '1.5rem', marginBottom: '1rem', fontSize: '1.125rem', lineHeight: 1.7, color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
                                             li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />
                                         }}
                                     >

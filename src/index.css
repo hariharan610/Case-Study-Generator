@@ -26,6 +26,33 @@
   --border-radius: 12px;
 }
 
+.theme-dark {
+  --color-bg: #111827;
+  --color-text: #F9FAFB;
+  --color-accent: #3B82F6;
+  /* Sharp blue accent */
+  --color-border: #374151;
+  --color-input-bg: #1F2937;
+  --color-text-light: #9CA3AF;
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Inter', sans-serif;
+  --border-radius: 8px;
+  /* Slightly sharper in dark mode */
+}
+
+.theme-editorial {
+  --color-bg: #FAF9F7;
+  --color-text: #1A1A2E;
+  --color-accent: #E2B659;
+  --color-border: #E0DFDD;
+  --color-input-bg: #FFFFFF;
+  --color-text-light: #5A5A6E;
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'DM Sans', sans-serif;
+  --border-radius: 4px;
+  /* Classic sharp corners */
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -47,6 +74,7 @@ h3,
 h4,
 h5,
 h6 {
+  font-family: var(--font-serif);
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.25;
@@ -56,7 +84,8 @@ h6 {
 
 p {
   margin-bottom: var(--spacing-sm);
-  color: #374151;
+  color: var(--color-text);
+  opacity: 0.9;
   /* Slightly softer for reading */
 }
 
@@ -86,7 +115,7 @@ button {
 }
 
 .btn-secondary {
-  background-color: #FFFFFF;
+  background-color: var(--color-input-bg);
   color: var(--color-text);
   border: 1px solid var(--color-border);
   padding: 0.6rem 1.2rem;
@@ -95,8 +124,8 @@ button {
 }
 
 .btn-secondary:hover {
-  background-color: #F3F4F6;
-  border-color: #D1D5DB;
+  background-color: var(--color-bg);
+  border-color: var(--color-text-light);
 }
 
 input,
@@ -175,10 +204,22 @@ textarea:focus {
   position: sticky;
   top: calc(88px + var(--spacing-md));
   /* Below header */
+  max-height: calc(100vh - 88px - var(--spacing-md) * 2);
+  overflow-y: auto;
+  /* Hide scrollbar natively */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
   background-color: transparent;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+}
+
+.editor-sidebar::-webkit-scrollbar {
+  display: none;
+  /* Safari and Chrome */
 }
 
 .editor-sidebar-panel {
@@ -342,7 +383,7 @@ textarea:focus {
 .preview-container {
   width: 100%;
   max-width: 800px;
-  background-color: #FFFFFF;
+  background-color: var(--color-bg);
   border: 1px solid var(--color-border);
   /* Modern bordered container rather than heavy shadow */
   border-radius: var(--border-radius);
@@ -354,12 +395,12 @@ textarea:focus {
   position: relative;
   width: 100%;
   min-height: 400px;
-  background-color: var(--color-text);
+  background-color: var(--color-input-bg);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--spacing-lg) var(--spacing-md);
-  color: white;
+  color: var(--color-text);
 }
 
 .preview-hero-bg {
@@ -379,7 +420,7 @@ textarea:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, transparent 0%, rgba(17, 24, 39, 1) 100%);
+  background: linear-gradient(to bottom, transparent 0%, var(--color-input-bg) 100%);
 }
 
 .preview-hero-content {
@@ -388,7 +429,7 @@ textarea:focus {
 }
 
 .preview-hero h1 {
-  color: white;
+  color: var(--color-text);
   font-size: 3rem;
   /* Tighter sizing */
   letter-spacing: -0.04em;
@@ -402,11 +443,11 @@ textarea:focus {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.8rem;
-  color: #9CA3AF;
+  color: var(--color-text-light);
 }
 
 .preview-metrics-bar {
-  background-color: #F9FAFB;
+  background-color: var(--color-input-bg);
   padding: 3rem 2rem;
   display: flex;
   justify-content: space-around;
@@ -459,7 +500,8 @@ textarea:focus {
 .preview-section p {
   font-size: 1.125rem;
   line-height: 1.7;
-  color: #374151;
+  color: var(--color-text);
+  opacity: 0.9;
   /* Optimal contrast for long-form reading */
 }
 
@@ -468,17 +510,17 @@ textarea:focus {
   border-radius: 8px;
   /* sharp edges look more 'print' in digital */
   margin: var(--spacing-md) 0;
-  background-color: #F3F4F6;
+  background-color: var(--color-input-bg);
   border: 1px solid var(--color-border);
 }
 
 .ai-warning {
-  background-color: #F3F4F6;
+  background-color: var(--color-input-bg);
   border-left: 3px solid var(--color-text);
   padding: 1rem 1.25rem;
   border-radius: 0 8px 8px 0;
   font-size: 0.9rem;
-  color: #4B5563;
+  color: var(--color-text-light);
 }
 
 .api-key-container {

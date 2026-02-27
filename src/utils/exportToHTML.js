@@ -13,6 +13,7 @@ export function downloadHTML(projectData, blocks, metricsData, theme) {
             --spacing-md: 2rem;
             --spacing-lg: 4rem;
             --spacing-xl: 6rem;
+            --color-input-bg: #FFFFFF;
         }
 
         /* Variables injected based on theme selection */
@@ -22,6 +23,7 @@ export function downloadHTML(projectData, blocks, metricsData, theme) {
                 --color-text: #F9FAFB;
                 --color-accent: #3B82F6;
                 --color-border: #374151;
+                --color-input-bg: #1F2937;
                 --font-sans: 'Inter', sans-serif;
                 --font-serif: 'Inter', sans-serif;
             ` : theme === 'editorial' ? `
@@ -29,6 +31,7 @@ export function downloadHTML(projectData, blocks, metricsData, theme) {
                 --color-text: #1A1A2E;
                 --color-accent: #E2B659;
                 --color-border: #E0DFDD;
+                --color-input-bg: #FFFFFF;
                 --font-serif: 'Playfair Display', serif;
                 --font-sans: 'DM Sans', sans-serif;
             ` : `
@@ -36,6 +39,7 @@ export function downloadHTML(projectData, blocks, metricsData, theme) {
                 --color-text: #111827;
                 --color-accent: #000000;
                 --color-border: #E5E7EB;
+                --color-input-bg: #FFFFFF;
                 --font-sans: 'Inter', sans-serif;
                 --font-serif: 'Inter', sans-serif;
             `}
@@ -96,6 +100,49 @@ export function downloadHTML(projectData, blocks, metricsData, theme) {
             height: auto;
             border-radius: 8px;
             margin: var(--spacing-sm) 0;
+        }
+
+        .preview-hero {
+            position: relative;
+            width: 100%;
+            min-height: 400px;
+            background-color: var(--color-input-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: var(--spacing-lg) var(--spacing-md);
+            color: var(--color-text);
+        }
+        
+        .preview-hero-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 0%, var(--color-input-bg) 100%);
+        }
+
+        .preview-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .preview-hero h1 {
+            color: var(--color-text);
+            font-size: 3rem;
+            letter-spacing: -0.04em;
+            margin-bottom: 1rem;
+        }
+
+        .preview-hero-meta {
+            display: flex;
+            gap: var(--spacing-md);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.8rem;
+            color: var(--color-text-light);
         }
 
         @media print {

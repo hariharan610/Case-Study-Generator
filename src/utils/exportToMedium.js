@@ -70,6 +70,12 @@ export function generateMediumHtml(projectData, blocks, metricsData) {
         if (block.type === 'link' && block.url) {
             html += `<p style="text-align: center;"><a href="${block.url}"><strong>${block.label || 'View Link'}</strong></a></p>`;
         }
+
+        if (block.type === 'embed' && block.url) {
+            html += `<div style="margin-top: 1rem; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; height: 600px; max-height: 80vh;">
+                <iframe src="${block.url}" style="width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
+            </div><br/>`;
+        }
     });
 
     return html;
