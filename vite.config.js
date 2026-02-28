@@ -11,6 +11,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/anthropic/, ''),
       },
+      '/api/openai': {
+        target: 'https://api.openai.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/openai/, ''),
+      },
+      '/api/qwen': {
+        target: 'https://dashscope-intl.aliyuncs.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/qwen/, ''),
+      },
     },
   },
 })

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { motion, AnimatePresence } from 'framer-motion';
+import ColorThief from 'colorthief';
+import rehypeRaw from 'rehype-raw';
 import { generateMediumHtml } from '../utils/exportToMedium';
 import { downloadHTML } from '../utils/exportToHTML';
 
@@ -10,7 +13,30 @@ export default function Preview({
     theme
 }) {
     const [copyStatus, setCopyStatus] = useState('Copy for Medium');
+    const [dominantColor, setDominantColor] = useState(null);
     const validMetrics = metricsData.filter(m => m.value || m.label);
+
+    // ColorThief dynamic background extraction
+    React.useEffect(() => {
+        const firstImageBlock = blocks.find(b => b.type === 'image' && b.images && b.images.length > 0);
+        if (firstImageBlock && firstImageBlock.images[0]) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                try {
+                    const colorThief = new ColorThief();
+                    const color = colorThief.getColor(img);
+                    // Create a very subtle, premium 15% opacity wash
+                    setDominantColor(`rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.12)`);
+                } catch (e) {
+                    console.error("ColorThief failed", e);
+                }
+            };
+            img.src = firstImageBlock.images[0];
+        } else {
+            setDominantColor(null);
+        }
+    }, [blocks]);
 
     const renderTextWithLinks = (text) => {
         // Simple regex to match [Link Text](https://url.com)
@@ -86,7 +112,9 @@ export default function Preview({
 
             {/* Hero Section (Basic Info) */}
             <section className="preview-hero" style={{ minHeight: '300px' }}>
-                <div className="preview-hero-gradient"></div>
+                <div className="preview-hero-gradient" style={dominantColor ? {
+                    background: `linear-gradient(to bottom, ${dominantColor} 0%, var(--color-input-bg) 100%)`
+                } : {}}></div>
                 <div className="preview-hero-content">
                     <h1>{projectData.name || 'Untitled Project'}</h1>
                     <div className="preview-hero-meta">
@@ -111,84 +139,129 @@ export default function Preview({
 
             {/* Content Sections mapped dynamically */}
             <section className="preview-content">
-                {blocks.map(block => {
-                    if (block.type === 'text') {
-                        const displayCopy = block.generatedContent || block.content;
-                        if (!block.heading && !displayCopy) return null;
+                <AnimatePresence>
+                    {blocks.map(block => {
+                        if (block.type === 'text') {
+                            const displayCopy = block.generatedContent || block.content;
+                            if (!block.heading && !displayCopy) return null;
 
-                        return (
-                            <div key={block.id} className="preview-section">
-                                {block.heading && <h3>{block.heading}</h3>}
-                                {displayCopy && (
-                                    <ReactMarkdown
-                                        components={{
-                                            p: ({ node, ...props }) => <p style={{ fontSize: '1.125rem', lineHeight: 1.7, color: 'var(--color-text)', opacity: 0.9, marginBottom: '1rem' }} {...props} />,
-                                            a: ({ node, ...props }) => <a style={{ color: 'var(--color-text)', textDecoration: 'underline', textDecorationThickness: '2px', textUnderlineOffset: '4px' }} target="_blank" rel="noopener noreferrer" {...props} />,
-                                            ul: ({ node, ...props }) => <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem', fontSize: '1.125rem', lineHeight: 1.7, color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
-                                            ol: ({ node, ...props }) => <ol style={{ paddingLeft: '1.5rem', marginBottom: '1rem', fontSize: '1.125rem', lineHeight: 1.7, color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
-                                            li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />
-                                        }}
-                                    >
-                                        {displayCopy}
-                                    </ReactMarkdown>
-                                )}
-                            </div>
-                        );
-                    }
-
-                    if (block.type === 'image' && block.images && block.images.length > 0) {
-                        return (
-                            <div key={block.id} className="preview-section" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${block.images.length === 1 ? '100%' : '300px'}, 1fr))`, gap: '1rem', margin: '2rem 0' }}>
-                                {block.images.map((imgSrc, imgIdx) => (
-                                    <img key={imgIdx} src={imgSrc} alt="" style={{ width: '100%', borderRadius: 'var(--border-radius)', objectFit: 'cover' }} />
-                                ))}
-                            </div>
-                        );
-                    }
-
-                    if (block.type === 'link' && block.url) {
-                        return (
-                            <div key={block.id} className="preview-section" style={{ textAlign: 'center', margin: '4rem 0' }}>
-                                <a
-                                    href={block.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        display: 'inline-block',
-                                        backgroundColor: 'var(--color-text)',
-                                        color: 'white',
-                                        padding: '1rem 2.5rem',
-                                        borderRadius: '8px',
-                                        textDecoration: 'none',
-                                        fontWeight: '500',
-                                        fontSize: '1.1rem',
-                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                                        transition: 'transform 0.2s',
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                    onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            return (
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.4, type: "spring", bounce: 0.2 }}
+                                    key={block.id}
+                                    className="preview-section"
                                 >
-                                    {block.label || 'View Link'}
-                                </a>
-                            </div>
-                        )
-                    }
+                                    {block.heading && <h3>{block.heading}</h3>}
+                                    {displayCopy && (
+                                        <ReactMarkdown
+                                            rehypePlugins={[rehypeRaw]}
+                                            components={{
+                                                p: ({ node, ...props }) => <p style={{ maxWidth: '65ch', margin: '0 auto 1.5rem auto', fontSize: '1.125rem', lineHeight: 1.6, letterSpacing: '0.01em', color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
+                                                a: ({ node, ...props }) => <a style={{ color: 'var(--color-text)', textDecoration: 'underline', textDecorationThickness: '2px', textUnderlineOffset: '4px' }} target="_blank" rel="noopener noreferrer" {...props} />,
+                                                ul: ({ node, ...props }) => <ul style={{ maxWidth: '65ch', margin: '0 auto 1.5rem auto', paddingLeft: '1.5rem', fontSize: '1.125rem', lineHeight: 1.6, letterSpacing: '0.01em', color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
+                                                ol: ({ node, ...props }) => <ol style={{ maxWidth: '65ch', margin: '0 auto 1.5rem auto', paddingLeft: '1.5rem', fontSize: '1.125rem', lineHeight: 1.6, letterSpacing: '0.01em', color: 'var(--color-text)', opacity: 0.9 }} {...props} />,
+                                                li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />
+                                            }}
+                                        >
+                                            {displayCopy}
+                                        </ReactMarkdown>
+                                    )}
+                                </motion.div>
+                            );
+                        }
 
-                    if (block.type === 'embed' && block.url) {
-                        return (
-                            <div key={block.id} className="preview-section" style={{ margin: '3rem 0', borderRadius: 'var(--border-radius)', overflow: 'hidden', border: '1px solid var(--color-border)', backgroundColor: '#F3F4F6' }}>
-                                <iframe
-                                    src={block.url}
-                                    style={{ width: '100%', height: '500px', border: 'none', display: 'block' }}
-                                    title="Figma Preview"
-                                    allowFullScreen
-                                />
-                            </div>
-                        )
-                    }
+                        if (block.type === 'image' && block.images && block.images.length > 0) {
+                            return (
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.4, type: "spring", bounce: 0.2 }}
+                                    key={block.id}
+                                    className="preview-section"
+                                    style={{ margin: '2rem 0' }}
+                                >
+                                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${block.images.length === 1 ? '100%' : '300px'}, 1fr))`, gap: '1rem' }}>
+                                        {block.images.map((imgSrc, imgIdx) => (
+                                            <img key={imgIdx} src={imgSrc} alt="" style={{ width: '100%', borderRadius: 'var(--border-radius)', objectFit: 'cover' }} />
+                                        ))}
+                                    </div>
+                                    {block.caption && (
+                                        <p style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--color-text-light)', marginTop: '1rem', fontStyle: 'italic', maxWidth: '65ch', margin: '1rem auto 0 auto' }}>
+                                            {block.caption}
+                                        </p>
+                                    )}
+                                </motion.div>
+                            );
+                        }
 
-                    return null;
-                })}
+                        if (block.type === 'link' && block.url) {
+                            return (
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.4, type: "spring", bounce: 0.2 }}
+                                    key={block.id}
+                                    className="preview-section"
+                                    style={{ textAlign: 'center', margin: '4rem 0' }}
+                                >
+                                    <a
+                                        href={block.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'inline-block',
+                                            backgroundColor: 'var(--color-text)',
+                                            color: 'white',
+                                            padding: '1rem 2.5rem',
+                                            borderRadius: '8px',
+                                            textDecoration: 'none',
+                                            fontWeight: '500',
+                                            fontSize: '1.1rem',
+                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                            transition: 'transform 0.2s',
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                    >
+                                        {block.label || 'View Link'}
+                                    </a>
+                                </motion.div>
+                            )
+                        }
+
+                        if (block.type === 'embed' && block.url) {
+                            return (
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.4, type: "spring", bounce: 0.2 }}
+                                    key={block.id}
+                                    className="preview-section"
+                                    style={{ margin: '3rem 0', borderRadius: 'var(--border-radius)', overflow: 'hidden', border: '1px solid var(--color-border)', backgroundColor: '#F3F4F6' }}
+                                >
+                                    <iframe
+                                        src={block.url}
+                                        style={{ width: '100%', height: '500px', border: 'none', display: 'block' }}
+                                        title="Figma Preview"
+                                        allowFullScreen
+                                    />
+                                </motion.div>
+                            )
+                        }
+
+                        return null;
+                    })}
+                </AnimatePresence>
             </section>
         </div>
     );

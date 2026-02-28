@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Type, Image as ImageIcon, Link2, MonitorPlay, Sparkles } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -18,9 +19,11 @@ import { TextBlock } from './blocks/TextBlock';
 import { ImageBlock } from './blocks/ImageBlock';
 import { LinkBlock } from './blocks/LinkBlock';
 import { EmbedBlock } from './blocks/EmbedBlock';
+import { generateCaseStudyTitle } from '../services/ai';
 
 export default function EditorForm({
     apiKey, setApiKey,
+    aiModel, setAiModel,
     projectData, setProjectData,
     blocks, setBlocks,
     metricsData, setMetricsData,
@@ -93,6 +96,43 @@ export default function EditorForm({
         }
     };
 
+    const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+
+    const handleAutoGenerateTitle = async () => {
+        if (!apiKey) {
+            let providerName = 'Anthropic';
+            if (aiModel.includes('gemini')) providerName = 'Google';
+            if (aiModel.includes('gpt')) providerName = 'OpenAI';
+            if (aiModel.includes('qwen')) providerName = 'Alibaba DashScope';
+
+            alert(`Please paste your ${providerName} API Key to use AI features.`);
+            return;
+        }
+
+        const outlineContext = blocks
+            .map(b => b.heading || b.type)
+            .filter(Boolean)
+            .join(', ');
+
+        if (!outlineContext) {
+            alert("Please add some blocks to your outline first so the AI knows what your project is about.");
+            return;
+        }
+
+        setIsGeneratingTitle(true);
+        try {
+            const title = await generateCaseStudyTitle(apiKey, aiModel, outlineContext);
+            if (title) {
+                setProjectData({ ...projectData, name: title });
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to auto-generate title. Check your API key.");
+        } finally {
+            setIsGeneratingTitle(false);
+        }
+    };
+
     return (
         <div className="editor-layout">
 
@@ -126,19 +166,19 @@ export default function EditorForm({
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                             <button type="button" className="btn-secondary" onClick={() => addBlock('text')} style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 0.5rem', gap: '0.25rem' }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                                <Type size={20} />
                                 Text
                             </button>
                             <button type="button" className="btn-secondary" onClick={() => addBlock('image')} style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 0.5rem', gap: '0.25rem' }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <ImageIcon size={20} />
                                 Image
                             </button>
                             <button type="button" className="btn-secondary" onClick={() => addBlock('link')} style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 0.5rem', gap: '0.25rem' }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                <Link2 size={20} />
                                 Link
                             </button>
                             <button type="button" className="btn-secondary" onClick={() => addBlock('embed')} style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 0.5rem', gap: '0.25rem' }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                <MonitorPlay size={20} />
                                 Embed
                             </button>
                         </div>
@@ -174,11 +214,26 @@ export default function EditorForm({
             <main className="editor-canvas">
 
                 <div className="api-key-container" style={{ marginBottom: '2rem' }}>
-                    <h3>Anthropic API Key</h3>
-                    <p>Your key is only used directly in your browser and is never stored anywhere else.</p>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <h3 style={{ margin: '0 0 0.5rem 0' }}>AI Provider</h3>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem' }}>Choose your AI engine.</p>
+                        <select
+                            value={aiModel}
+                            onChange={(e) => setAiModel(e.target.value)}
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-input-bg)', color: 'var(--color-text)' }}
+                        >
+                            <option value="gemini-1.5-flash">Google Gemini 1.5 Flash (Free Tier)</option>
+                            <option value="claude-3-5-sonnet">Anthropic Claude 3.5 Sonnet</option>
+                            <option value="gpt-4o">OpenAI GPT-4o</option>
+                            <option value="qwen-plus">Alibaba Qwen-Plus</option>
+                        </select>
+                    </div>
+
+                    <h3 style={{ margin: '0 0 0.5rem 0' }}>API Key</h3>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem' }}>Stored entirely locally in your browser cache.</p>
                     <input
                         type="password"
-                        placeholder="sk-ant-..."
+                        placeholder={aiModel.includes('gemini') ? "AIzaSy..." : aiModel.includes('gpt') ? "sk-proj-..." : "sk-..."}
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                     />
@@ -191,7 +246,22 @@ export default function EditorForm({
                 <section className="form-section">
                     <h2>Project Basics</h2>
                     <div className="form-group">
-                        <label>Project Name</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label>Project Name</label>
+                            <button
+                                onClick={handleAutoGenerateTitle}
+                                disabled={isGeneratingTitle}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                    background: 'none', border: 'none',
+                                    color: 'var(--color-accent)', fontSize: '0.8rem',
+                                    cursor: 'pointer', fontWeight: 600, padding: 0
+                                }}
+                            >
+                                <Sparkles size={14} />
+                                {isGeneratingTitle ? 'Thinking...' : 'Auto-Generate'}
+                            </button>
+                        </div>
                         <input
                             type="text"
                             name="name"

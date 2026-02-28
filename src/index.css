@@ -223,12 +223,19 @@ textarea:focus {
 }
 
 .editor-sidebar-panel {
-  background-color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: var(--spacing-md);
   border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  /* Modern soft shadow */
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  /* very subtle edge */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+}
+
+.theme-dark .editor-sidebar-panel {
+  background-color: rgba(31, 41, 55, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .editor-canvas {
@@ -586,6 +593,62 @@ textarea:focus {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* -----------------------------------------
+   REACT-QUILL WYSIWYG OVERRIDES (Glass UI)
+----------------------------------------- */
+.quill-wrapper {
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  /* Contains the children */
+}
+
+/* Make toolbar flush and clean */
+.ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  background: rgba(255, 255, 255, 0.4);
+  /* Glass look */
+  padding: 8px 12px !important;
+}
+
+.theme-dark .ql-toolbar.ql-snow {
+  background: rgba(31, 41, 55, 0.4);
+}
+
+/* Remove borders from the typing container */
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+}
+
+.ql-editor {
+  min-height: 120px;
+  padding: 1rem !important;
+  line-height: 1.6;
+}
+
+/* Style the toolbar icons to fit our aesthetic */
+.ql-snow .ql-stroke {
+  stroke: var(--color-text-light) !important;
+  stroke-width: 1.5 !important;
+}
+
+.ql-snow .ql-fill {
+  fill: var(--color-text-light) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button:focus .ql-stroke,
+.ql-snow .ql-toolbar button:focus .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--color-text) !important;
 }
 
 /* -----------------------------------------

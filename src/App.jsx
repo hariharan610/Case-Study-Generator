@@ -7,37 +7,42 @@ function App() {
     const [viewMode, setViewMode] = useState('edit'); // 'edit' or 'preview'
     const [isGenerating, setIsGenerating] = useState(false);
     const [apiKey, setApiKey] = useState('');
+    const [aiModel, setAiModel] = useState(() => {
+        return localStorage.getItem('caseStudy_aiModel') || 'gemini-1.5-flash';
+    });
 
     const [theme, setTheme] = useState(() => {
         return localStorage.getItem('caseStudy_theme') || 'minimalist';
     });
 
-    // Default states
-    const defaultProjectData = { name: '', role: '', timeline: '' };
-    const defaultBlocks = [
-        { id: 'block-overview', type: 'text', heading: 'Overview', content: '', generatedContent: '' },
-        { id: 'block-problem', type: 'text', heading: 'The Challenge', content: '', generatedContent: '' },
-        { id: 'block-process', type: 'text', heading: 'Process & Discovery', content: '', generatedContent: '' },
-        { id: 'block-solution', type: 'text', heading: 'The Solution', content: '', generatedContent: '' },
-        { id: 'block-solution-img', type: 'image', images: [] },
-        { id: 'block-results', type: 'text', heading: 'Results & Impact', content: '', generatedContent: '' }
-    ];
-    const defaultMetrics = [{ value: '', label: '' }];
+    // Default states generators (forces fresh IDs on reset to unmount old ReactQuill instances)
+    const getDefaultProjectData = () => ({ name: '', role: '', timeline: '' });
+    const getDefaultBlocks = () => {
+        const ts = Date.now();
+        return [
+            { id: `block-overview-${ts}`, type: 'text', heading: 'Overview', content: '', generatedContent: '' },
+            { id: `block-problem-${ts}`, type: 'text', heading: 'The Challenge', content: '', generatedContent: '' },
+            { id: `block-process-${ts}`, type: 'text', heading: 'Process & Discovery', content: '', generatedContent: '' },
+            { id: `block-solution-${ts}`, type: 'text', heading: 'The Solution', content: '', generatedContent: '' },
+            { id: `block-solution-img-${ts}`, type: 'image', images: [] },
+            { id: `block-results-${ts}`, type: 'text', heading: 'Results & Impact', content: '', generatedContent: '' }
+        ];
+    };
+    const getDefaultMetrics = () => [{ value: '', label: '' }];
 
-    // Form Data State with Local Storage Initialization
     const [projectData, setProjectData] = useState(() => {
         const saved = localStorage.getItem('caseStudy_projectData');
-        return saved ? JSON.parse(saved) : defaultProjectData;
+        return saved ? JSON.parse(saved) : getDefaultProjectData();
     });
 
     const [blocks, setBlocks] = useState(() => {
         const saved = localStorage.getItem('caseStudy_blocks');
-        return saved ? JSON.parse(saved) : defaultBlocks;
+        return saved ? JSON.parse(saved) : getDefaultBlocks();
     });
 
     const [metricsData, setMetricsData] = useState(() => {
         const saved = localStorage.getItem('caseStudy_metricsData');
-        return saved ? JSON.parse(saved) : defaultMetrics;
+        return saved ? JSON.parse(saved) : getDefaultMetrics();
     });
 
     // Auto-Save Effect
@@ -46,13 +51,14 @@ function App() {
         localStorage.setItem('caseStudy_blocks', JSON.stringify(blocks));
         localStorage.setItem('caseStudy_metricsData', JSON.stringify(metricsData));
         localStorage.setItem('caseStudy_theme', theme);
-    }, [projectData, blocks, metricsData, theme]);
+        localStorage.setItem('caseStudy_aiModel', aiModel);
+    }, [projectData, blocks, metricsData, theme, aiModel]);
 
     const handleClearData = () => {
         if (window.confirm('Are you sure you want to clear all data and start over? This cannot be undone.')) {
-            setProjectData(defaultProjectData);
-            setBlocks(defaultBlocks);
-            setMetricsData(defaultMetrics);
+            setProjectData(getDefaultProjectData());
+            setBlocks(getDefaultBlocks());
+            setMetricsData(getDefaultMetrics());
             localStorage.removeItem('caseStudy_projectData');
             localStorage.removeItem('caseStudy_blocks');
             localStorage.removeItem('caseStudy_metricsData');
@@ -75,7 +81,7 @@ function App() {
 
         setIsGenerating(true);
         try {
-            const updatedBlocks = await generateCaseStudyText(apiKey, projectData, blocks);
+            const updatedBlocks = await generateCaseStudyText(apiKey, aiModel, projectData, blocks);
             setBlocks(updatedBlocks);
             setViewMode('preview');
         } catch (error) {
@@ -103,6 +109,8 @@ function App() {
                     <EditorForm
                         apiKey={apiKey}
                         setApiKey={setApiKey}
+                        aiModel={aiModel}
+                        setAiModel={setAiModel}
                         projectData={projectData}
                         setProjectData={setProjectData}
                         blocks={blocks}
@@ -128,7 +136,7 @@ function App() {
                 <div className="loading-overlay">
                     <div className="spinner"></div>
                     <h2>Generating Polished Case Study...</h2>
-                    <p>Analyzing your blocks and writing professional copy with Claude.</p>
+                    <p>Analyzing your blocks and writing professional copy with {aiModel.includes('gemini') ? 'Google Gemini' : 'Anthropic Claude'}.</p>
                 </div>
             )}
         </div>

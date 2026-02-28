@@ -59,6 +59,17 @@ export function ImageBlock({
                 </label>
             </div>
 
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>Gallery Caption (Optional)</label>
+                <input
+                    type="text"
+                    value={block.caption || ''}
+                    onChange={(e) => onUpdate(block.id, { caption: e.target.value })}
+                    placeholder="e.g. Dashboard redesign before and after..."
+                    style={{ fontSize: '0.9rem' }}
+                />
+            </div>
+
             {block.images && block.images.length > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
                     {block.images.map((imgSrc, idx) => (

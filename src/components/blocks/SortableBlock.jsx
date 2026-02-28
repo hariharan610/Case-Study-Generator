@@ -15,8 +15,13 @@ export function SortableBlock({ id, block, onRemove }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.4 : 1,
-        zIndex: isDragging ? 2 : 1
+        opacity: isDragging ? 0.8 : 1,
+        zIndex: isDragging ? 999 : 1,
+        boxShadow: isDragging ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : 'none',
+        rotate: isDragging ? '2deg' : '0deg',
+        scale: isDragging ? 1.02 : 1,
+        borderColor: isDragging ? 'var(--color-accent)' : 'var(--color-border)',
+        cursor: isDragging ? 'grabbing' : 'pointer'
     };
 
     const getTitle = () => {

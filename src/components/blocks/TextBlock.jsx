@@ -1,9 +1,27 @@
 import React from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export function TextBlock({
     block,
     onUpdate
 }) {
+    // Only essential formatting options for a clean UI
+    const modules = {
+        toolbar: [
+            ['bold', 'italic'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link'],
+            ['clean']
+        ]
+    };
+
+    const formats = [
+        'bold', 'italic',
+        'list', 'bullet',
+        'link'
+    ];
+
     return (
         <div style={{
             background: '#fff',
@@ -24,15 +42,19 @@ export function TextBlock({
                 />
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>Notes <span className="optional">(AI will expand this)</span></label>
-                <textarea
-                    value={block.content}
-                    onChange={(e) => onUpdate(block.id, { content: e.target.value })}
-                    rows={4}
-                    placeholder="Brief bullet points about this section."
-                />
+                <div className="quill-wrapper">
+                    <ReactQuill
+                        theme="snow"
+                        value={block.content || ''}
+                        onChange={(content) => onUpdate(block.id, { content })}
+                        modules={modules}
+                        formats={formats}
+                        placeholder="Start typing or use the formatting bar..."
+                    />
+                </div>
             </div>
-        </div>
+        </div >
     );
 }

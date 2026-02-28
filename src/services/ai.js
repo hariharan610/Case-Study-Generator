@@ -1,4 +1,6 @@
-export async function generateCaseStudyText(apiKey, projectData, blocks) {
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+export async function generateCaseStudyText(apiKey, aiModel, projectData, blocks) {
     // Extract only the text blocks to send to Claude
     const textBlocks = blocks.filter(b => b.type === 'text');
 
@@ -24,31 +26,73 @@ RULES:
 Do not wrap the JSON in markdown blocks, just return the raw JSON array string.
 `;
 
-    const response = await fetch('/api/anthropic/v1/messages', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 2000,
-            system: 'You are an expert UX design portfolio copywriter. Follow instructions exactly and return ONLY valid JSON.',
-            messages: [
-                { role: 'user', content: prompt }
-            ]
-        })
-    });
+    let textOutput = '';
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.error?.message || `API Error: ${response.status} ${response.statusText}`);
+    if (aiModel.includes('gemini')) {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: aiModel });
+
+        const systemInstruction = 'You are an expert UX design portfolio copywriter. Follow instructions exactly and return ONLY valid JSON.';
+        const result = await model.generateContent(`${systemInstruction}\n\n${prompt}`);
+        const response = await result.response;
+        textOutput = response.text() || '[]';
+    } else if (aiModel.includes('gpt') || aiModel.includes('qwen')) {
+        // Both OpenAI and DashScope (Qwen) use the identical OpenAI-compatible chat completions API format
+        const endpoint = aiModel.includes('qwen')
+            ? '/api/qwen/compatible-mode/v1/chat/completions'
+            : '/api/openai/v1/chat/completions';
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: aiModel,
+                max_tokens: 2000,
+                messages: [
+                    { role: 'system', content: 'You are an expert UX design portfolio copywriter. Follow instructions exactly and return ONLY valid JSON.' },
+                    { role: 'user', content: prompt }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData?.error?.message || `API Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        textOutput = data.choices?.[0]?.message?.content || '[]';
+    } else {
+        // Fallback to Anthropic Claude
+        const response = await fetch('/api/anthropic/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: aiModel,
+                max_tokens: 2000,
+                system: 'You are an expert UX design portfolio copywriter. Follow instructions exactly and return ONLY valid JSON.',
+                messages: [
+                    { role: 'user', content: prompt }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData?.error?.message || `API Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        textOutput = data.content?.[0]?.text || '[]';
     }
-
-    const data = await response.json();
-    const textOutput = data.content?.[0]?.text || '[]';
 
     try {
         const cleanedText = textOutput.replace(/```json\\n/g, '').replace(/```/g, '').trim();
@@ -70,4 +114,57 @@ Do not wrap the JSON in markdown blocks, just return the raw JSON array string.
         console.error("Failed to parse AI response as JSON:", textOutput);
         throw new Error("The AI returned an invalid format. Please try again.");
     }
+}
+
+export async function generateCaseStudyTitle(apiKey, aiModel, outlineContext) {
+    const prompt = `Based on this case study outline: "${outlineContext}", generate a punchy, creative, 2-5 word title for the project. Respond with ONLY the title string, no quotes.`;
+
+    if (aiModel.includes('gemini')) {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: aiModel });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text()?.trim().replace(/['"]+/g, '');
+    } else if (aiModel.includes('gpt') || aiModel.includes('qwen')) {
+        const endpoint = aiModel.includes('qwen')
+            ? '/api/qwen/compatible-mode/v1/chat/completions'
+            : '/api/openai/v1/chat/completions';
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: aiModel,
+                max_tokens: 30,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+            return data.choices[0].message.content.trim().replace(/['"]+/g, '');
+        }
+    } else {
+        const response = await fetch('/api/anthropic/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-haiku-20240307', // Using haiku for fast, cheap titling when on Anthropic
+                max_tokens: 30,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+        const data = await response.json();
+        if (data.content && data.content[0]) {
+            return data.content[0].text.trim().replace(/['"]+/g, '');
+        }
+    }
+    return '';
 }
